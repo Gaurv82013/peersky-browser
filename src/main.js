@@ -99,14 +99,12 @@ async function setupProtocols(session) {
   sessionProtocol.registerStreamProtocol("web3", web3ProtocolHandler, P2P_PROTOCOL);
 }
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+// Window-all-closed handler is now managed by WindowManager
+// This allows the app to remain running when all windows are closed
 
+// Handle app activation (macOS dock click, or app icon click on other platforms)
 app.on("activate", () => {
-  if (windowManager.all.length === 0) {
+  if (windowManager && windowManager.all.length === 0) {
     windowManager.open({ isMainWindow: true });
   }
 });

@@ -72,18 +72,15 @@ class WindowManager {
     // Handle when all windows are closed (UI quit)
     app.on('window-all-closed', async () => {
       if (!this.isQuitting && !this.shutdownInProgress) {
-        // On macOS, keep app running, on other platforms quit
+        // Keep app running on all platforms when windows are closed
         // Clear saved state since user closed all windows (didn't quit)
         this.isClearingState = true;
-        this.isQuitting = true;
-        this.shutdownInProgress = true;
-        this.finalSaveCompleted = true; // Prevent before-quit from trying to save
         this.stopSaver();
         await this.clearSavedState();
-
-        if (process.platform !== 'darwin') {
-          app.quit();
-        }
+        this.isClearingState = false;
+        
+        // Don't quit - let the app keep running in background
+        // User can reopen windows via app menu or dock/taskbar
       }
     });
 
@@ -518,12 +515,12 @@ class WindowManager {
     }, 8000);
 
     try {
-      console.log('Saving final state before exit...');
-      await this.saveCompleteState();
+      console.log('Clearing state before exit (Quit = no restoration on next launch)...');
+      await this.clearSavedState();
       this.finalSaveCompleted = true;
-      console.log('State saved successfully. Now safe to close windows.');
+      console.log('State cleared successfully. Now safe to close windows.');
 
-      // ONLY AFTER successful save, close all windows
+      // ONLY AFTER clearing state, close all windows
       console.log('Destroying windows...');
       const windowsToClose = Array.from(this.windows);
       for (const window of windowsToClose) {
